@@ -1,0 +1,53 @@
+on:
+  push:
+    branches:
+      - main
+
+name: release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      # scan commits like "feat: add X" or "fix: fix X" to update changelog and bump version
+      - name: release-please
+        id: release-please
+        uses: google-github-actions/release-please-action@v3
+        with:
+          command: manifest
+          config-file: .github/release-please.json
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: checkout repository
+        if: ${{ steps.release-please.outputs.release_created }}
+        uses: actions/checkout@v3
+
+      - name: validate gradle wrapper
+        if: ${{ steps.release-please.outputs.release_created }}
+        uses: gradle/wrapper-validation-action@v1
+        
+      - name: setup jdk
+        if: ${{ steps.release-please.outputs.release_created }}
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: adopt
+          
+      - name: make gradle wrapper executable
+        if: ${{ steps.release-please.outputs.release_created }}
+        if: ${{ runner.os != 'Windows' }}
+        run: chmod +x ./gradlew
+        
+      - name: gradlew build 
+        run: ./gradlew
+        if: ${{ steps.release-please.outputs.release_created }}
+
+      - name: upload release
+        if: ${{ steps.release-please.outputs.release_created }}
+        uses: svenstaro/upload-release-action@v2
+        with:
+          tag: ${{ steps.release-please.outputs.tag_name }}
+          file: '**/build/libs/*'
+          file_glob: true
+          overwrite: true
+          repo_token: ${{ secrets.GITHUB_TOKEN }}

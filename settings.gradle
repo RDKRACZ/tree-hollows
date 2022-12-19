@@ -4,9 +4,20 @@ pluginManagement {
             name = 'Fabric'
             url = 'https://maven.fabricmc.net/'
         }
+        maven {
+            name = 'Architectury'
+            url = 'https://maven.architectury.dev/'
+        }
+        maven {
+            name = "Forge"
+            url = "https://files.minecraftforge.net/maven/"
+        }
         gradlePluginPortal()
     }
 }
 
-include 'main'
-// , 'architects-palette-support'
+include('fabric', 'forge')
+
+rootProject.name = 'tree-hollows'
+project(':fabric').name = 'fabric'
+project(':forge').name = 'forge'
